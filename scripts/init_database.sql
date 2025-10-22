@@ -3,11 +3,11 @@
 Create Database and Schemas
 =============================================================
 Script Purpose:
-    This script creates a new database named 'DataWarehouseAnalytics' after checking if it already exists. 
+    This script creates a new database named 'DataWarehouse' after checking if it already exists. 
     If the database exists, it is dropped and recreated. Additionally, this script creates a schema called gold
 	
 WARNING:
-    Running this script will drop the entire 'DataWarehouseAnalytics' database if it exists. 
+    Running this script will drop the entire 'DataWarehouse' database if it exists. 
     All data in the database will be permanently deleted. Proceed with caution 
     and ensure you have proper backups before running this script.
 */
@@ -15,26 +15,30 @@ WARNING:
 USE master;
 GO
 
--- Drop and recreate the 'DataWarehouseAnalytics' database
-IF EXISTS (SELECT 1 FROM sys.databases WHERE name = 'DataWarehouseAnalytics')
+--Drop and recreate the 'DataWarehouse' database
+IF EXISTS (SELECT 1 FROM Sys.Databases WHERE name= 'DataWarehouse')
 BEGIN
-    ALTER DATABASE DataWarehouseAnalytics SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE DataWarehouseAnalytics;
+    ALTER DATABASE DataWarehouse SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE DataWarehouse;
 END;
 GO
 
--- Create the 'DataWarehouseAnalytics' database
-CREATE DATABASE DataWarehouseAnalytics;
+--Cretae the 'DataWarehouse' database
+CREATE DATABASE DataWarehouse;
 GO
 
-USE DataWarehouseAnalytics;
+USE DataWarehouse;
 GO
 
--- Create Schemas
+--Create Schemas
+CREATE SCHEMA bronze;
+GO
+
+CREATE SCHEMA silver;
+GO
 
 CREATE SCHEMA gold;
 GO
-
 CREATE TABLE gold.dim_customers(
 	customer_key int,
 	customer_id int,
@@ -77,38 +81,45 @@ CREATE TABLE gold.fact_sales(
 );
 GO
 
+--Load Customers
 TRUNCATE TABLE gold.dim_customers;
 GO
 
 BULK INSERT gold.dim_customers
-FROM 'C:\sql\sql-data-analytics-project\datasets\csv-files\gold.dim_customers.csv'
+FROM '/var/opt/mssql/import/gold.dim_customers.csv'
 WITH (
-	FIRSTROW = 2,
-	FIELDTERMINATOR = ',',
-	TABLOCK
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '0x0a',
+    TABLOCK
 );
 GO
 
+
+--Load Products
 TRUNCATE TABLE gold.dim_products;
 GO
 
 BULK INSERT gold.dim_products
-FROM 'C:\sql\sql-data-analytics-project\datasets\csv-files\gold.dim_products.csv'
+FROM '/var/opt/mssql/import/gold.dim_products.csv'
 WITH (
-	FIRSTROW = 2,
-	FIELDTERMINATOR = ',',
-	TABLOCK
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '0x0a',
+    TABLOCK
 );
 GO
 
+--Load Sales
 TRUNCATE TABLE gold.fact_sales;
 GO
 
 BULK INSERT gold.fact_sales
-FROM 'C:\sql\sql-data-analytics-project\datasets\csv-files\gold.fact_sales.csv'
+FROM '/var/opt/mssql/import/gold.fact_sales.csv'
 WITH (
-	FIRSTROW = 2,
-	FIELDTERMINATOR = ',',
-	TABLOCK
+    FIRSTROW = 2,
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '0x0a',
+    TABLOCK
 );
 GO
